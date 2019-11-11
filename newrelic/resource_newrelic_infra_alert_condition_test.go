@@ -29,6 +29,8 @@ func TestAccNewRelicInfraAlertCondition_Basic(t *testing.T) {
 						"newrelic_infra_alert_condition.foo", "critical.0.duration", "10"),
 					resource.TestCheckNoResourceAttr(
 						"newrelic_infra_alert_condition.foo", "warning"),
+					resource.TestCheckResourceAttr(
+						"newrelic_infra_alert_condition.foo", "violation_close_timer", "0"),
 				),
 			},
 			{
@@ -39,6 +41,8 @@ func TestAccNewRelicInfraAlertCondition_Basic(t *testing.T) {
 						"newrelic_infra_alert_condition.foo", "name", fmt.Sprintf("tf-test-updated-%s", rName)),
 					resource.TestCheckResourceAttr(
 						"newrelic_infra_alert_condition.foo", "runbook_url", "https://bar.example.com"),
+					resource.TestCheckResourceAttr(
+						"newrelic_infra_alert_condition.foo", "violation_close_timer", "72"),
 				),
 			},
 		},
@@ -268,6 +272,7 @@ resource "newrelic_infra_alert_condition" "foo" {
   event           = "StorageSample"
   select          = "diskFreePercent"
   comparison      = "below"
+  violation_close_timer = "72"
 
   critical {
 	  duration = 10

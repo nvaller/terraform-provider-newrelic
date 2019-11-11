@@ -135,21 +135,28 @@ func resourceNewRelicInfraAlertCondition() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			// int defaults to 0 if not specified, and 0 would mean disable here
+			"violation_close_timer": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 		},
 	}
 }
 
 func buildInfraAlertConditionStruct(d *schema.ResourceData) *newrelic.AlertInfraCondition {
 
+	x := d.Get("violation_close_timer").(int)
 	condition := newrelic.AlertInfraCondition{
-		Name:       d.Get("name").(string),
-		Enabled:    d.Get("enabled").(bool),
-		PolicyID:   d.Get("policy_id").(int),
-		Event:      d.Get("event").(string),
-		Comparison: d.Get("comparison").(string),
-		Select:     d.Get("select").(string),
-		Type:       d.Get("type").(string),
-		Critical:   expandAlertThreshold(d.Get("critical")),
+		Name:                d.Get("name").(string),
+		Enabled:             d.Get("enabled").(bool),
+		PolicyID:            d.Get("policy_id").(int),
+		Event:               d.Get("event").(string),
+		Comparison:          d.Get("comparison").(string),
+		Select:              d.Get("select").(string),
+		Type:                d.Get("type").(string),
+		ViolationCloseTimer: &x,
+		Critical:            expandAlertThreshold(d.Get("critical")),
 	}
 
 	if attr, ok := d.GetOk("runbook_url"); ok {
@@ -188,6 +195,7 @@ func readInfraAlertConditionStruct(condition *newrelic.AlertInfraCondition, d *s
 	d.Set("enabled", condition.Enabled)
 	d.Set("created_at", condition.CreatedAt)
 	d.Set("updated_at", condition.UpdatedAt)
+	d.Set("violation_close_timer", condition.ViolationCloseTimer)
 
 	if condition.Where != "" {
 		d.Set("where", condition.Where)
@@ -282,7 +290,6 @@ func resourceNewRelicInfraAlertConditionUpdate(d *schema.ResourceData, meta inte
 	condition.ID = id
 
 	log.Printf("[INFO] Updating New Relic Infra alert condition %d", id)
-
 	_, err = client.UpdateAlertInfraCondition(*condition)
 	if err != nil {
 		return err
